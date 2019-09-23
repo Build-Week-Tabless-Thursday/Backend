@@ -1,0 +1,49 @@
+
+exports.up = function(knex) {
+  return knex.schema
+  .createTable('users', tbl => {
+    // ID
+    tbl.increments();
+
+    // USERNAME
+    tbl.string('username', 255).unique().notNullable();
+
+    // EMAIL
+    tbl.string('email', 255).unique().notNullable();
+
+    // PASSWORD
+    tbl.string('password', 255).notNullable();
+      
+  })
+  .createTable('tabs', tbl => {
+    // ID
+    tbl.increments();
+
+    // URL
+    tbl.string('url', 255).notNullable();
+
+    // TITLE
+    tbl.string('title', 255).notNullable();
+
+    // CATEGORY
+    tbl.string('category', 255);
+
+    // NOTES
+    tbl.text('notes');
+
+    // FOREIGN KEY TO USERS
+    tbl.integer('user_id')
+    .unsigned()
+    .notNullable()
+    .references('id')
+    .inTable('users')
+    .onUpdate('CASCADE')
+    .onDelete('CASCADE');
+  })
+};
+
+exports.down = function(knex) {
+  return knex.schema
+  .dropTableIfExists('tabs')
+  .dropTableIfExists('users')
+};
