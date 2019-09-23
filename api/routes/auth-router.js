@@ -3,8 +3,6 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const secrets = require('../../secrets/secrets.js');
 const { validateUser, validateUserLogin } = require('../middleware/validate-middleware.js');
-const { createToken } = require('../middleware/token-middleware.js');
-
 const Users = require('../../models/users-model.js');
 const router = express.Router();
 
@@ -43,6 +41,20 @@ router.post('/login', validateUserLogin, (req, res) => {
     })
   
   });
+
+
+  // CREATE TOKEN
+  function createToken(user) {
+    const payload = {
+        username: user.username,
+        email: user.email
+    }
+    const options = {
+        expiresIn: '1d'
+    }
+    return jwt.sign(payload, secrets.JWT_SECRET, options);
+}
+
 
 
 module.exports = router;
