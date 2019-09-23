@@ -98,3 +98,4 @@ public
 .dynamodb/
 node_modules
 npm-debug.log
+.gitignore
