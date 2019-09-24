@@ -6,9 +6,8 @@ const restricted = require('../middleware/restricted-middleware.js');
 const Tabs = require('../../models/tabs-model.js');
 
 router.get('/:id', restricted, (req, res) => {
-    const { id } = req.params;
-
-    Tabs.getById({ id })
+    const { username } = req.user;
+    Tabs.getTabsByUser()
 })
 
 

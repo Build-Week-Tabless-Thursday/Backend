@@ -25,6 +25,9 @@ exports.up = function(knex) {
     // TITLE
     tbl.string('title', 255).notNullable();
 
+    //DUE DATE
+    tbl.date('due');
+
     // CATEGORY
     tbl.string('category', 255);
 

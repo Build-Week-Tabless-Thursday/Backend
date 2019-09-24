@@ -47,10 +47,6 @@ router.post('/login', validateUserLogin, (req, res) => {
   
   });
 
-
-
-
-
   // CREATE TOKEN
   function createToken(user) {
     const payload = {
