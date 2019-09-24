@@ -47,7 +47,7 @@ router.post('/login', validateUserLogin, (req, res) => {
   function createToken(user) {
     const payload = {
         username: user.username,
-        email: user.email
+        email: user.email,
     }
     const options = {
         expiresIn: '1d'
