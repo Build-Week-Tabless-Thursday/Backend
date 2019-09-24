@@ -9,7 +9,7 @@ module.exports = (req, res, next) => {
       if (err) {
         res.status(401).json({ message: 'Invalid Credentials' });
       } else {
-        req.user = { username: decodedToken.username, email: decodedToken.email };
+        req.user = { id: decodedToken.id, username: decodedToken.username, email: decodedToken.email };
         next();
       }
     })

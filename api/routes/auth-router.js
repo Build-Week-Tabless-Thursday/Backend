@@ -6,15 +6,18 @@ const { validateUser, validateUserLogin } = require('../middleware/validate-midd
 const Users = require('../../models/users-model.js');
 const router = express.Router();
 
-
+// REGISTER A NEW USER
 router.post('/register', validateUser, (req, res) => {
     const { username, email, password } = req.body;
     const hash = bcrypt.hashSync(password, 12);
 
     Users.insert({ username, email, password: hash })
-    .then(user => {
+    .then(id => {
+      Users.findById(id)
+      .then(user => {
         const token = createToken(user);
-        res.status(201).json({ token });
+        res.status(201).json({ ...user, token });
+      })
     })
     .catch(err => {
         console.log(err)
@@ -23,6 +26,8 @@ router.post('/register', validateUser, (req, res) => {
 });
 
 
+
+// USER LOGIN
 router.post('/login', validateUserLogin, (req, res) => {
     const { username, password } = req.body;
   
@@ -31,7 +36,7 @@ router.post('/login', validateUserLogin, (req, res) => {
     .then(user => {
       if (user && bcrypt.compareSync(password, user.password)) {
         const token = createToken(user);
-        res.status(200).json({ token });
+        res.status(200).json({ ...user, token });
       } else {
         res.status(401).json({ message: 'Invalid credentials' })
       }
@@ -43,9 +48,13 @@ router.post('/login', validateUserLogin, (req, res) => {
   });
 
 
+
+
+
   // CREATE TOKEN
   function createToken(user) {
     const payload = {
+        id: user.id,
         username: user.username,
         email: user.email,
     }

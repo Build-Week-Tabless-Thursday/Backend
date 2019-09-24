@@ -1,13 +1,14 @@
 const express = require('express');
 const router = express.Router();
-
 const restricted = require('../middleware/restricted-middleware.js');
 
 
-router.get('/', restricted, (req, res) => {
-    const { id } = req.query;
+const Tabs = require('../../models/tabs-model.js');
 
+router.get('/:id', restricted, (req, res) => {
+    const { id } = req.params;
 
+    Tabs.getById({ id })
 })
 
 

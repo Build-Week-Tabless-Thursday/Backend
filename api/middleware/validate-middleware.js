@@ -30,7 +30,6 @@ function validateTab(req, res, next) {
     const tab = req.body;
 
     if (tab.url && tab.title) {
-        req.body = tab;
         next();
     } else {
         res.status(400).json({ message: 'Please provide a url and title to add a tab.' });

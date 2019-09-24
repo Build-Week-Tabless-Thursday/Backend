@@ -2,7 +2,15 @@ const db = require('../data/db-config.js');
 
 module.exports = {
     insert,
-    getTabsByUser
+    getTabsByUser,
+    getById
+}
+
+function getById(id) {
+    return db('tabs')
+    .select()
+    .first()
+    .where({ id })
 }
 
 function getTabsByUser(username) {
