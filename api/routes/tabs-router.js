@@ -1,4 +1,5 @@
 const express = require("express");
+const prerendercloud = require('prerendercloud');
 const router = express.Router();
 const restricted = require("../middleware/restricted-middleware.js");
 
@@ -25,7 +26,11 @@ router.post("/", restricted, validateTab, (req, res) => {
   const tab = req.body;
   const { id } = req.user;
   tab.user_id = id;
-  
+  // prerendercloud.screenshot(tab.url)
+  // .then(preview => {
+  //   console.log(preview);
+  // });
+
   Tabs.insert(tab)
     .then(tab => {
       res.status(200).json(tab);

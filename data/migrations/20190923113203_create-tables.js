@@ -31,6 +31,9 @@ exports.up = function(knex) {
     // CATEGORY
     tbl.string('category', 255);
 
+    // PREVIEW
+    tbl.string('preview', 255);
+
     // NOTES
     tbl.text('notes');
 
