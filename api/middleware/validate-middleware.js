@@ -1,3 +1,5 @@
+const Tabs = require('../../models/tabs-model.js')
+
 module.exports = {
     validateUser,
     validateUserLogin,
