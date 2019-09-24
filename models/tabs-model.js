@@ -19,7 +19,7 @@ function getById(id) {
 function getTabsByUser(username) {
     return db('users as u')
     .join('tabs as t', 'u.id', '=', 't.user_id' )
-    .select('t.id', 't.title', 't.url', 't.category', 't.notes')
+    .select('t.id', 't.title', 't.url', 't.preview', 't.category', 't.notes')
     .where({ username })
 }
 
