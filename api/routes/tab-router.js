@@ -10,7 +10,7 @@ const prerendercloud = require("prerendercloud");
 // ADD A NEW TAB
 router.post("/", restricted, validateTab, (req, res) => {
   const tab = req.body;
-  const { id } = req.user;
+  const { id, username } = req.user;
 
   createScreenshot(tab.url)
     .then(preview => {
@@ -23,9 +23,9 @@ router.post("/", restricted, validateTab, (req, res) => {
       console.log(!tab.preview);
       tab.user_id = id;
       Tabs.insert(tab)
-        .then(ids => {
-          return Tabs.getById(ids[0]).then(tab => {
-            res.status(201).json(tab);
+        .then(() => {
+          return Tabs.getTabsByUser(username).then(tabs => {
+            res.status(201).json(tabs);
           });
         })
         .catch(err => {
@@ -90,7 +90,12 @@ router.delete("/:id", restricted, (req, res) => {
 
 // SCREENSHOT FUNCTION
 async function createScreenshot(url) {
-  const img = await prerendercloud.screenshot(url);
+  const img = await prerendercloud.screenshot(url, {
+    deviceWidth: 800,
+    deviceHeight: 600,
+    viewportWidth: 640,
+    viewportHeight: 480
+  });
   const string = img.reduce(
     (data, byte) => data + String.fromCharCode(byte),
     ""
