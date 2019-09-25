@@ -14,9 +14,14 @@ router.post("/", restricted, validateTab, (req, res) => {
 
   createScreenshot(tab.url)
     .then(preview => {
-      tab.user_id = id;
       tab.preview = preview;
-
+    })
+    .catch(err => {
+      tab.preview = null;
+    })
+    .finally(() => {
+      console.log(!tab.preview);
+      tab.user_id = id;
       Tabs.insert(tab)
         .then(ids => {
           return Tabs.getById(ids[0]).then(tab => {
@@ -27,10 +32,6 @@ router.post("/", restricted, validateTab, (req, res) => {
           console.log(err);
           res.status(500).json({ error: "Server error" });
         });
-    })
-    .catch(err => {
-      console.log(err);
-      res.status(500).json({ error: "Server error" });
     });
 });
 
