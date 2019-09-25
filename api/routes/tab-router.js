@@ -2,8 +2,41 @@ const express = require("express");
 const router = express.Router();
 const restricted = require("../middleware/restricted-middleware.js");
 const { validateTab } = require("../middleware/validate-middleware.js");
-
+const puppeteer = require('puppeteer');
 const Tabs = require("../../models/tabs-model.js");
+const btoa = require('btoa');
+
+
+// ADD A NEW TAB
+router.post("/", restricted, validateTab, (req, res) => {
+  const tab = req.body;
+  const { id } = req.user;
+
+  createScreenshot(tab.url)
+  .then(img => {
+    tab.user_id = id;
+    let preview = img.reduce((data, byte)=> data + String.fromCharCode(byte), '');
+    preview = btoa(preview);
+    tab.preview = preview;
+  
+    Tabs.insert(tab)
+    .then(ids => {
+      Tabs.getById(ids[0])
+      .then(tab => {
+        res.status(201).json(tab)
+      })
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).json({ error: "Server error" });
+    });
+  })
+  .catch(err => {
+    console.log(err)
+    res.status(500).json({ error: "Server error" });
+  })
+});
+
 
 router.get("/:id", restricted, (req, res) => {
   const { username } = req.user;
@@ -57,6 +90,23 @@ router.delete("/:id", restricted, (req, res) => {
       });
   });
 });
+
+
+// SCREENSHOT FUNCTION
+async function createScreenshot(url) {
+  const browser = await puppeteer.launch({
+    headless: true,
+    ignoreDefaultArgs: ['--disable-dev-shm-usage'],
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
+  const page = await browser.newPage();
+  await page.goto(url);
+  await page.setViewport({ width: 600, height: 400 })
+  const img = await page.screenshot();
+  await browser.close();
+  return img;
+};
+
 
 function findTab(id, tabs, res, cb) {
   const tab = tabs.find(tab => parseInt(id) === tab.id);
