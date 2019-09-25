@@ -12,7 +12,7 @@ function getById(id) {
   return db("tabs")
     .select()
     .first()
-    .where({ id });
+    .where("id", id);
 }
 
 function getTabsByUser(username) {
