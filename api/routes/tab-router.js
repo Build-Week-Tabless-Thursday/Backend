@@ -32,10 +32,8 @@ router.post('/', restricted, validateTab, (req, res) => {
     .finally(() => {
       tab.user_id = id;
       Tabs.insert(tab)
-        .then(() => {
-          return Tabs.getTabsByUser(username).then(tabs => {
-            res.status(201).json(tabs);
-          });
+        .then(ids => {
+          res.status(201).json({ id: ids[0], ...tab });
         })
         .catch(err => {
           console.log(err);
@@ -67,17 +65,32 @@ router.put('/:id', restricted, validateTab, (req, res) => {
   const { id } = req.params;
   const { username } = req.user;
 
-  Tabs.getTabsByUser(username).then(tabs => {
-    findTab(id, tabs, res, id => {
-      Tabs.update(id, changes)
-        .then(updated => {
-          res.status(200).json(updated);
-        })
-        .catch(err => {
-          res.status(500).json({ error: 'Server error' });
+  createScreenshot(changes.url)
+    .then(async ({ string, buffer }) => {
+      changes.preview = string;
+      const { backgroundColor, color } = await createColors(buffer);
+      changes.backgroundColor = backgroundColor;
+      changes.color = color;
+    })
+    .catch(err => {
+      console.log(err);
+      changes.preview = null;
+      changes.backgroundColor = null;
+      changes.color = null;
+    })
+    .finally(() => {
+      Tabs.getTabsByUser(username).then(tabs => {
+        findTab(id, tabs, res, id => {
+          Tabs.update(id, changes)
+            .then(id => {
+              res.status(200).json({ id, ...changes });
+            })
+            .catch(err => {
+              res.status(500).json({ error: 'Server error' });
+            });
         });
+      });
     });
-  });
 });
 
 router.delete('/:id', restricted, (req, res) => {
