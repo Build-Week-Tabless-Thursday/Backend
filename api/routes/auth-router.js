@@ -15,7 +15,7 @@ router.post("/register", validateUser, (req, res) => {
   const hash = bcrypt.hashSync(password, 12);
 
   Users.insert({ username, email, password: hash })
-    .then(ids => 
+    .then(ids =>
       Users.findById(ids[0])
         .then(user => {
           const token = createToken(user);
