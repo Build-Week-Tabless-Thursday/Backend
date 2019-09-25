@@ -1,11 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const restricted = require('../middleware/restricted-middleware.js');
-const { validateTab } = require('../middleware/validate-middleware.js');
-// const puppeteer = require("puppeteer");
-const Tabs = require('../../models/tabs-model.js');
+
 const btoa = require('btoa');
 const prerendercloud = require('prerendercloud');
+const Vibrant = require('node-vibrant');
+
+const restricted = require('../middleware/restricted-middleware.js');
+const { validateTab } = require('../middleware/validate-middleware.js');
+const Tabs = require('../../models/tabs-model.js');
+
+prerendercloud.set('prerenderToken', process.env.SCREENSHOT_TOKEN);
 
 // ADD A NEW TAB
 router.post('/', restricted, validateTab, (req, res) => {
@@ -13,14 +17,19 @@ router.post('/', restricted, validateTab, (req, res) => {
   const { id, username } = req.user;
 
   createScreenshot(tab.url)
-    .then(preview => {
-      tab.preview = preview;
+    .then(async ({ string, buffer }) => {
+      tab.preview = string;
+      const { backgroundColor, color } = await createColors(buffer);
+      tab.backgroundColor = backgroundColor;
+      tab.color = color;
     })
     .catch(err => {
+      console.log(err);
       tab.preview = null;
+      tab.backgroundColor = null;
+      tab.color = null;
     })
     .finally(() => {
-      console.log(!tab.preview);
       tab.user_id = id;
       Tabs.insert(tab)
         .then(() => {
@@ -98,7 +107,21 @@ async function createScreenshot(url) {
   });
   const string = img.reduce((data, byte) => data + String.fromCharCode(byte), '');
 
-  return `data:image/jpg;base64, ${btoa(string)}`;
+  return { string: `data:image/jpg;base64, ${btoa(string)}`, buffer: img };
+}
+
+async function createColors(img) {
+  const vibrant = Vibrant.from(img);
+  let colors = { backgroundColor: null, color: null };
+
+  await vibrant.getPalette((_, palette) => {
+    colors = {
+      backgroundColor: palette['Vibrant'].getHex(),
+      color: palette['DarkMuted'].getBodyTextColor(),
+    };
+  });
+
+  return colors;
 }
 
 function findTab(id, tabs, res, cb) {
