@@ -12,9 +12,7 @@ function insert(user) {
     return db('users')
     .insert(user)
     .then(ids => {
-        console.log(ids)
-        const [id] = ids;
-        return id;
+        return ids;
     })
 }
 
