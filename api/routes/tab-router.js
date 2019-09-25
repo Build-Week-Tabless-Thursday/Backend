@@ -1,14 +1,14 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const restricted = require("../middleware/restricted-middleware.js");
-const { validateTab } = require("../middleware/validate-middleware.js");
+const restricted = require('../middleware/restricted-middleware.js');
+const { validateTab } = require('../middleware/validate-middleware.js');
 // const puppeteer = require("puppeteer");
-const Tabs = require("../../models/tabs-model.js");
-const btoa = require("btoa");
-const prerendercloud = require("prerendercloud");
+const Tabs = require('../../models/tabs-model.js');
+const btoa = require('btoa');
+const prerendercloud = require('prerendercloud');
 
 // ADD A NEW TAB
-router.post("/", restricted, validateTab, (req, res) => {
+router.post('/', restricted, validateTab, (req, res) => {
   const tab = req.body;
   const { id, username } = req.user;
 
@@ -30,12 +30,12 @@ router.post("/", restricted, validateTab, (req, res) => {
         })
         .catch(err => {
           console.log(err);
-          res.status(500).json({ error: "Server error" });
+          res.status(500).json({ error: 'Server error' });
         });
     });
 });
 
-router.get("/:id", restricted, (req, res) => {
+router.get('/:id', restricted, (req, res) => {
   const { username } = req.user;
   const { id } = req.params;
 
@@ -45,7 +45,7 @@ router.get("/:id", restricted, (req, res) => {
       if (tab) {
         res.status(200).json(tab);
       } else {
-        res.status(404).json({ message: "Tab not found" });
+        res.status(404).json({ message: 'Tab not found' });
       }
     })
     .catch(err => {
@@ -53,7 +53,7 @@ router.get("/:id", restricted, (req, res) => {
     });
 });
 
-router.put("/:id", restricted, validateTab, (req, res) => {
+router.put('/:id', restricted, validateTab, (req, res) => {
   const changes = req.body;
   const { id } = req.params;
   const { username } = req.user;
@@ -65,13 +65,13 @@ router.put("/:id", restricted, validateTab, (req, res) => {
           res.status(200).json(updated);
         })
         .catch(err => {
-          res.status(500).json({ error: "Server error" });
+          res.status(500).json({ error: 'Server error' });
         });
     });
   });
 });
 
-router.delete("/:id", restricted, (req, res) => {
+router.delete('/:id', restricted, (req, res) => {
   const { id } = req.params;
   const { username } = req.user;
 
@@ -82,7 +82,7 @@ router.delete("/:id", restricted, (req, res) => {
           res.status(200).json(deleted);
         })
         .catch(err => {
-          res.status(500).json({ error: "Server error" });
+          res.status(500).json({ error: 'Server error' });
         });
     });
   });
@@ -94,12 +94,10 @@ async function createScreenshot(url) {
     deviceWidth: 800,
     deviceHeight: 600,
     viewportWidth: 640,
-    viewportHeight: 480
+    viewportHeight: 480,
   });
-  const string = img.reduce(
-    (data, byte) => data + String.fromCharCode(byte),
-    ""
-  );
+  const string = img.reduce((data, byte) => data + String.fromCharCode(byte), '');
+
   return `data:image/jpg;base64, ${btoa(string)}`;
 }
 
@@ -108,7 +106,7 @@ function findTab(id, tabs, res, cb) {
   if (tab) {
     cb(tab.id);
   } else {
-    res.status(404).json({ message: "Tab not found" });
+    res.status(404).json({ message: 'Tab not found' });
   }
 }
 
