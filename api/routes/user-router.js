@@ -19,7 +19,7 @@ router.get("/", restricted, (req, res) => {
       }
     })
     .catch(err => {
-        res.status(500).json({ error: 'Server error.' });
+      res.status(500).json({ error: "Server error." });
     });
 });
 
@@ -34,9 +34,9 @@ router.put("/", restricted, validateUser, (req, res) => {
         res.status(200).json(updated);
       })
       .catch(err => {
-        res.status(500).json({ error: 'Server error.' });
+        res.status(500).json({ error: "Server error." });
       });
-  })
+  });
 });
 
 router.delete("/", restricted, (req, res) => {
@@ -44,13 +44,13 @@ router.delete("/", restricted, (req, res) => {
 
   findUser(id, res, () => {
     Users.remove(id)
-    .then(deleted => {
-      res.status(200).json(deleted);
-    })
-    .catch(err => {
-      res.status(500).json({ error: 'Server error.' });
-    });
-  })
+      .then(deleted => {
+        res.status(200).json(deleted);
+      })
+      .catch(err => {
+        res.status(500).json({ error: "Server error." });
+      });
+  });
 });
 
 function findUser(id, res, cb) {
