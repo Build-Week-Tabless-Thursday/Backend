@@ -95,7 +95,7 @@ async function createScreenshot(url) {
     (data, byte) => data + String.fromCharCode(byte),
     ""
   );
-  return btoa(string);
+  return `data:image/jpg;base64, ${btoa(string)}`;
 }
 
 function findTab(id, tabs, res, cb) {
