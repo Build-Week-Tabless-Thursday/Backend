@@ -14,7 +14,7 @@ prerendercloud.set('prerenderToken', process.env.SCREENSHOT_TOKEN);
 // ADD A NEW TAB
 router.post('/', restricted, validateTab, (req, res) => {
   const tab = req.body;
-  const { id, username } = req.user;
+  const { id } = req.user;
 
   createScreenshot(tab.url)
     .then(async ({ string, buffer }) => {
