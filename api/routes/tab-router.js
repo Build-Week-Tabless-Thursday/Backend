@@ -1,41 +1,55 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const restricted = require("../middleware/restricted-middleware.js");
-const { validateTab } = require("../middleware/validate-middleware.js");
-// const puppeteer = require("puppeteer");
-const Tabs = require("../../models/tabs-model.js");
-const btoa = require("btoa");
-const prerendercloud = require("prerendercloud");
+
+const btoa = require('btoa');
+const prerendercloud = require('prerendercloud');
+const Vibrant = require('node-vibrant');
+const { formatURL } = require('../../utils/formatURL.js');
+
+const restricted = require('../middleware/restricted-middleware.js');
+const { validateTab } = require('../middleware/validate-middleware.js');
+const Tabs = require('../../models/tabs-model.js');
+
+prerendercloud.set('prerenderToken', process.env.SCREENSHOT_TOKEN);
 
 // ADD A NEW TAB
-router.post("/", restricted, validateTab, (req, res) => {
+router.post('/', restricted, validateTab, (req, res) => {
   const tab = req.body;
-  const { id, username } = req.user;
+  const { id } = req.user;
 
-  createScreenshot(tab.url)
-    .then(preview => {
-      tab.preview = preview;
-    })
-    .catch(err => {
-      tab.preview = null;
-    })
-    .finally(() => {
-      console.log(!tab.preview);
-      tab.user_id = id;
-      Tabs.insert(tab)
-        .then(() => {
-          return Tabs.getTabsByUser(username).then(tabs => {
-            res.status(201).json(tabs);
+  try {
+    tab.url = formatURL(tab.url);
+    createScreenshot(tab.url)
+      .then(async ({ string, buffer }) => {
+        tab.preview = string;
+        const { backgroundColor, color } = await createColors(buffer);
+        tab.backgroundColor = backgroundColor;
+        tab.color = color;
+      })
+      .catch(err => {
+        console.log(err);
+        tab.preview = null;
+        tab.backgroundColor = null;
+        tab.color = null;
+      })
+      .finally(() => {
+        tab.user_id = id;
+        Tabs.insert(tab)
+          .then(tabs => {
+            res.status(201).json(tabs[0]);
+          })
+          .catch(err => {
+            console.log(err);
+            res.status(500).json({ error: 'Server error' });
           });
-        })
-        .catch(err => {
-          console.log(err);
-          res.status(500).json({ error: "Server error" });
-        });
-    });
+      });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({ error: 'Bad Request' });
+  }
 });
 
-router.get("/:id", restricted, (req, res) => {
+router.get('/:id', restricted, (req, res) => {
   const { username } = req.user;
   const { id } = req.params;
 
@@ -45,7 +59,7 @@ router.get("/:id", restricted, (req, res) => {
       if (tab) {
         res.status(200).json(tab);
       } else {
-        res.status(404).json({ message: "Tab not found" });
+        res.status(404).json({ message: 'Tab not found' });
       }
     })
     .catch(err => {
@@ -53,25 +67,40 @@ router.get("/:id", restricted, (req, res) => {
     });
 });
 
-router.put("/:id", restricted, validateTab, (req, res) => {
+router.put('/:id', restricted, validateTab, (req, res) => {
   const changes = req.body;
   const { id } = req.params;
   const { username } = req.user;
 
-  Tabs.getTabsByUser(username).then(tabs => {
-    findTab(id, tabs, res, id => {
-      Tabs.update(id, changes)
-        .then(updated => {
-          res.status(200).json(updated);
-        })
-        .catch(err => {
-          res.status(500).json({ error: "Server error" });
+  createScreenshot(changes.url)
+    .then(async ({ string, buffer }) => {
+      changes.preview = string;
+      const { backgroundColor, color } = await createColors(buffer);
+      changes.backgroundColor = backgroundColor;
+      changes.color = color;
+    })
+    .catch(err => {
+      console.log(err);
+      changes.preview = null;
+      changes.backgroundColor = null;
+      changes.color = null;
+    })
+    .finally(() => {
+      Tabs.getTabsByUser(username).then(tabs => {
+        findTab(id, tabs, res, id => {
+          Tabs.update(id, changes)
+            .then(id => {
+              res.status(200).json({ id, ...changes });
+            })
+            .catch(err => {
+              res.status(500).json({ error: 'Server error' });
+            });
         });
+      });
     });
-  });
 });
 
-router.delete("/:id", restricted, (req, res) => {
+router.delete('/:id', restricted, (req, res) => {
   const { id } = req.params;
   const { username } = req.user;
 
@@ -82,7 +111,7 @@ router.delete("/:id", restricted, (req, res) => {
           res.status(200).json(deleted);
         })
         .catch(err => {
-          res.status(500).json({ error: "Server error" });
+          res.status(500).json({ error: 'Server error' });
         });
     });
   });
@@ -98,9 +127,24 @@ async function createScreenshot(url) {
   });
   const string = img.reduce(
     (data, byte) => data + String.fromCharCode(byte),
-    ""
+    ''
   );
-  return `data:image/jpg;base64, ${btoa(string)}`;
+
+  return { string: `data:image/jpg;base64, ${btoa(string)}`, buffer: img };
+}
+
+async function createColors(img) {
+  const vibrant = Vibrant.from(img);
+  let colors = { backgroundColor: null, color: null };
+
+  await vibrant.getPalette((_, palette) => {
+    colors = {
+      backgroundColor: palette['Vibrant'].getHex(),
+      color: palette['DarkMuted'].getBodyTextColor()
+    };
+  });
+
+  return colors;
 }
 
 function findTab(id, tabs, res, cb) {
@@ -108,7 +152,7 @@ function findTab(id, tabs, res, cb) {
   if (tab) {
     cb(tab.id);
   } else {
-    res.status(404).json({ message: "Tab not found" });
+    res.status(404).json({ message: 'Tab not found' });
   }
 }
 
