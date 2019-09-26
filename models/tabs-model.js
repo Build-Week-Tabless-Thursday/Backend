@@ -3,17 +3,9 @@ const db = require('../data/db-config.js');
 module.exports = {
   insert,
   getTabsByUser,
-  getById,
   update,
   remove,
 };
-
-function getById(id) {
-  return db('tabs')
-    .select()
-    .first()
-    .where('id', id);
-}
 
 function getTabsByUser(username) {
   return db('users as u')
@@ -35,9 +27,7 @@ function getTabsByUser(username) {
 function insert(tab) {
   return db('tabs')
     .insert(tab)
-    .then(res => {
-      return res;
-    });
+    .returning('*');
 }
 
 function update(id, changes) {

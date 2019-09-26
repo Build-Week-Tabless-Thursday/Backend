@@ -15,13 +15,11 @@ prerendercloud.set('prerenderToken', process.env.SCREENSHOT_TOKEN);
 // ADD A NEW TAB
 router.post('/', restricted, validateTab, (req, res) => {
   const tab = req.body;
-  const { id, username } = req.user;
+  const { id } = req.user;
 
-  const url = formatURL(tab.url);
-
-  if (url) {
-    tab.url = url;
-    createScreenshot(url)
+  try {
+    tab.url = formatURL(tab.url);
+    createScreenshot(tab.url)
       .then(async ({ string, buffer }) => {
         tab.preview = string;
         const { backgroundColor, color } = await createColors(buffer);
@@ -37,16 +35,17 @@ router.post('/', restricted, validateTab, (req, res) => {
       .finally(() => {
         tab.user_id = id;
         Tabs.insert(tab)
-          .then(ids => {
-            res.status(201).json({ id: ids[0], ...tab });
+          .then(tabs => {
+            res.status(201).json(tabs[0]);
           })
           .catch(err => {
             console.log(err);
             res.status(500).json({ error: 'Server error' });
           });
       });
-  } else {
-    res.status(400).json({ message: 'Please enter a valid URL.' });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({ error: 'Bad Request' });
   }
 });
 
