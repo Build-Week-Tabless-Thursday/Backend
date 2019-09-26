@@ -32,8 +32,8 @@ router.post('/', restricted, validateTab, (req, res) => {
     .finally(() => {
       tab.user_id = id;
       Tabs.insert(tab)
-        .then(ids => {
-          res.status(201).json({ id: ids[0], ...tab });
+        .then(tabs => {
+          res.status(201).json(tabs[0]);
         })
         .catch(err => {
           console.log(err);
