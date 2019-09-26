@@ -4,6 +4,7 @@ const router = express.Router();
 const btoa = require('btoa');
 const prerendercloud = require('prerendercloud');
 const Vibrant = require('node-vibrant');
+const { formatURL } = require('../../utils/formatURL.js');
 
 const restricted = require('../middleware/restricted-middleware.js');
 const { validateTab } = require('../middleware/validate-middleware.js');
@@ -16,30 +17,37 @@ router.post('/', restricted, validateTab, (req, res) => {
   const tab = req.body;
   const { id, username } = req.user;
 
-  createScreenshot(tab.url)
-    .then(async ({ string, buffer }) => {
-      tab.preview = string;
-      const { backgroundColor, color } = await createColors(buffer);
-      tab.backgroundColor = backgroundColor;
-      tab.color = color;
-    })
-    .catch(err => {
-      console.log(err);
-      tab.preview = null;
-      tab.backgroundColor = null;
-      tab.color = null;
-    })
-    .finally(() => {
-      tab.user_id = id;
-      Tabs.insert(tab)
-        .then(ids => {
-          res.status(201).json({ id: ids[0], ...tab });
-        })
-        .catch(err => {
-          console.log(err);
-          res.status(500).json({ error: 'Server error' });
-        });
-    });
+  const url = formatURL(tab.url);
+
+  if (url) {
+    tab.url = url;
+    createScreenshot(url)
+      .then(async ({ string, buffer }) => {
+        tab.preview = string;
+        const { backgroundColor, color } = await createColors(buffer);
+        tab.backgroundColor = backgroundColor;
+        tab.color = color;
+      })
+      .catch(err => {
+        console.log(err);
+        tab.preview = null;
+        tab.backgroundColor = null;
+        tab.color = null;
+      })
+      .finally(() => {
+        tab.user_id = id;
+        Tabs.insert(tab)
+          .then(ids => {
+            res.status(201).json({ id: ids[0], ...tab });
+          })
+          .catch(err => {
+            console.log(err);
+            res.status(500).json({ error: 'Server error' });
+          });
+      });
+  } else {
+    res.status(400).json({ message: 'Please enter a valid URL.' });
+  }
 });
 
 router.get('/:id', restricted, (req, res) => {
@@ -116,9 +124,12 @@ async function createScreenshot(url) {
     deviceWidth: 800,
     deviceHeight: 600,
     viewportWidth: 640,
-    viewportHeight: 480,
+    viewportHeight: 480
   });
-  const string = img.reduce((data, byte) => data + String.fromCharCode(byte), '');
+  const string = img.reduce(
+    (data, byte) => data + String.fromCharCode(byte),
+    ''
+  );
 
   return { string: `data:image/jpg;base64, ${btoa(string)}`, buffer: img };
 }
@@ -130,7 +141,7 @@ async function createColors(img) {
   await vibrant.getPalette((_, palette) => {
     colors = {
       backgroundColor: palette['Vibrant'].getHex(),
-      color: palette['DarkMuted'].getBodyTextColor(),
+      color: palette['DarkMuted'].getBodyTextColor()
     };
   });
 
