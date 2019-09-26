@@ -2,7 +2,10 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const secrets = require('../../secrets/secrets.js');
-const { validateUser, validateUserLogin } = require('../middleware/validate-middleware.js');
+const {
+  validateUser,
+  validateUserLogin
+} = require('../middleware/validate-middleware.js');
 const Users = require('../../models/users-model.js');
 const router = express.Router();
 
@@ -21,7 +24,11 @@ router.post('/register', validateUser, (req, res) => {
             res.status(201).json({ token });
           })
       )
-      .catch(err => res.status(400).json({ error: 'Please provide a unique username and email.' }));
+      .catch(err =>
+        res
+          .status(400)
+          .json({ error: 'Please provide a unique username and email.' })
+      );
   } catch (err) {
     res.status(500).json({ error: err.toString() });
   }
@@ -57,10 +64,10 @@ function createToken(user) {
   const payload = {
     id: user.id,
     username: user.username,
-    email: user.email,
+    email: user.email
   };
   const options = {
-    expiresIn: '1d',
+    expiresIn: '1d'
   };
   return jwt.sign(payload, secrets.JWT_SECRET, options);
 }
