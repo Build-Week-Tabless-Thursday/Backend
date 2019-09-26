@@ -4,8 +4,8 @@ const Tabs = require('../tabs-model.js');
 const Users = require('../users-model.js');
 
 const user = {
-  username: 'user',
-  email: 'user@email.com',
+  username: 'user5',
+  email: 'user5@email.com',
   password: 'pass'
 };
 
@@ -41,10 +41,38 @@ describe('tabs-model.js', () => {
         url: 'https://www.reddit.com',
         title: 'Reddit'
       };
+
+      await Tabs.insert({ ...tab, user_id: 1 });
       await Tabs.update(1, newTab);
       const tabs = await db('tabs');
-      console.log(tabs);
-      expect(tabs[0]).toBe(false);
+      expect(tabs[0]).toEqual({
+        category: null,
+        due: null,
+        id: 1,
+        notes: null,
+        preview: null,
+        title: 'Reddit',
+        url: 'https://www.reddit.com',
+        user_id: 1
+      });
+    });
+  });
+
+  describe('remove()', () => {
+    it('should be able to remove a tab', async () => {
+      const tab = {
+        url: 'https://www.soundcloud.com',
+        title: 'SoundCloud'
+      };
+
+      await Tabs.insert({ ...tab, user_id: 1 });
+
+      let tabs = await db('tabs');
+      expect(tabs).toHaveLength(1);
+
+      await Tabs.remove(1);
+      tabs = await db('tabs');
+      expect(tabs).toHaveLength(0);
     });
   });
 });
